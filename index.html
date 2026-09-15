@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>課題管理アプリ（期限が近い順）</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .input-group input, .input-group select {
+            padding: 10px;
+            font-size: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .input-group input[type="text"] {
+            flex: 2;
+            min-width: 140px;
+        }
+        .input-group select {
+            flex: 1.5;
+            min-width: 140px;
+            background-color: #fff;
+        }
+        .input-group input[type="date"] {
+            flex: 1;
+            min-width: 120px;
+        }
+        .input-group button {
+            padding: 10px 20px;
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .input-group button:hover {
+            background-color: #219653;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fafafa;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
+        }
+        li.completed {
+            border-left-color: #95a5a6 !important;
+            background: #ecf0f1 !important;
+            text-decoration: line-through;
+            color: #7f8c8d;
+        }
+        li.completed .task-type-badge {
+            background-color: #d5dbdb !important;
+            color: #566573 !important;
+        }
+
+        /* 期限切れ（オーバー）の強調スタイル */
+        li.overdue {
+            background-color: #fce4e4 !important;
+            border-left: 6px solid #d32f2f !important;
+        }
+        li.overdue .task-date {
+            color: #d32f2f;
+            font-weight: bold;
+        }
+
+        /* タイプごとの色分け定義 (左ボーダー & バッジ) */
+        li.type-soukatsu-shimei { border-left: 6px solid #27ae60; } /* 緑系 */
+        .type-soukatsu-shimei-badge { background-color: #e8f8f5; color: #27ae60; }
+
+        li.type-soukatsu-gakkou { border-left: 6px solid #e67e22; } /* オレンジ系 */
+        .type-soukatsu-gakkou-badge { background-color: #fdebd0; color: #d35400; }
+
+        li.type-keisei-shiryo { border-left: 6px solid #3498db; } /* 青系 */
+        .type-keisei-shiryo-badge { background-color: #ebf5fb; color: #2980b9; }
+
+        li.type-reflection { border-left: 6px solid #9b59b6; } /* 紫系 */
+        .type-reflection-badge { background-color: #f4ecf7; color: #8e44ad; }
+
+        li.type-other { border-left: 6px solid #7f8c8d; } /* グレー系 */
+        .type-other-badge { background-color: #eaeded; color: #566573; }
+
+        .task-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .task-meta {
+            font-size: 12px;
+            color: #7f8c8d;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .task-type-badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .task-actions {
+            display: flex;
+            gap: 8px;
+        }
+        button.delete-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button.delete-btn:hover {
+            background-color: #c0392b;
+        }
+        button.toggle-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button.toggle-btn:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>課題管理アプリ</h1>
+    
+    <div class="input-group">
+        <input type="text" id="taskInput" placeholder="課題名を入力...">
+        <select id="typeInput">
+            <option value="総括（締め切り）">総括（締め切り）</option>
+            <option value="総括（学校内）">総括（学校内）</option>
+            <option value="形成・授業資料">形成・授業資料</option>
+            <option value="リフレクション・OPP">リフレクション・OPP</option>
+            <option value="その他">その他</option>
+        </select>
+        <input type="date" id="dateInput">
+        <button onclick="addTask()">追加</button>
+    </div>
+
+    <ul id="taskList"></ul>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', loadTasks);
+
+    function addTask() {
+        const taskInput = document.getElementById('taskInput');
+        const typeInput = document.getElementById('typeInput');
+        const dateInput = document.getElementById('dateInput');
+        
+        const taskText = taskInput.value.trim();
+        const taskType = typeInput.value;
+        const taskDate = dateInput.value;
+
+        if (taskText === "") {
+            alert("課題名を入力してください。");
+            return;
+        }
+
+        const task = {
+            id: Date.now(),
+            text: taskText,
+            type: taskType,
+            date: taskDate || "",
+            completed: false
+        };
+
+        saveTaskToLocalStorage(task);
+        reloadTaskList();
+
+        taskInput.value = "";
+        dateInput.value = "";
+        typeInput.selectedIndex = 0;
+    }
+
+    function loadTasks() {
+        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        
+        // 期限が短い順（昇順）にソート
+        tasks.sort((a, b) => {
+            if (!a.date && !b.date) return b.id - a.id; // 両方期限なしなら登録が新しい順
+            if (!a.date) return 1;  // 期限なしは後ろへ
+            if (!b.date) return -1; // 期限なしは後ろへ
+            return new Date(a.date) - new Date(b.date); // 日付が近い順
+        });
+
+        tasks.forEach(task => renderTask(task));
+    }
+
+    function reloadTaskList() {
+        document.getElementById('taskList').innerHTML = "";
+        loadTasks();
+    }
+
+    function saveTaskToLocalStorage(task) {
+        const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        tasks.push(task);
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+
+    function getTypeClass(type) {
+        switch(type) {
+            case '総括（締め切り）': return { item: 'type-soukatsu-shimei', badge: 'type-soukatsu-shimei-badge' };
+            case '総括（学校内）': return { item: 'type-soukatsu-gakkou', badge: 'type-soukatsu-gakkou-badge' };
+            case '形成・授業資料': return { item: 'type-keisei-shiryo', badge: 'type-keisei-shiryo-badge' };
+            case 'リフレクション・OPP': return { item: 'type-reflection', badge: 'type-reflection-badge' };
+            default: return { item: 'type-other', badge: 'type-other-badge' };
+        }
+    }
+
+    function renderTask(task) {
+        const taskList = document.getElementById('taskList');
+        
+        const li = document.createElement('li');
+        li.setAttribute('data-id', task.id);
+        
+        const classes = getTypeClass(task.type);
+        li.classList.add(classes.item);
+
+        // 期限切れの判定
+        let isOverdue = false;
+        if (!task.completed && task.date) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const taskDateObj = new Date(task.date);
+            
+            if (taskDateObj < today) {
+                isOverdue = true;
+                li.classList.add('overdue');
+            }
+        }
+
+        if (task.completed) {
+            li.classList.add('completed');
+        }
+
+        const displayDate = task.date ? `期限: ${escapeHTML(task.date)}` : "期限なし";
+        const overdueLabel = isOverdue ? ' 【期限切れ】' : '';
+
+        const taskInfo = document.createElement('div');
+        taskInfo.className = 'task-info';
+        taskInfo.innerHTML = `
+            <span>${escapeHTML(task.text)}</span>
+            <div class="task-meta">
+                <span class="task-type-badge ${classes.badge}">${escapeHTML(task.type)}</span>
+                <span class="task-date">${displayDate}${overdueLabel}</span>
+            </div>
+        `;
+
+        const taskActions = document.createElement('div');
+        taskActions.className = 'task-actions';
+
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'toggle-btn';
+        toggleBtn.textContent = task.completed ? '未完了に戻す' : '完了';
+        toggleBtn.onclick = function() {
+            toggleTask(task.id);
+        };
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.textContent = '削除';
+        deleteBtn.onclick = function() {
+            deleteTask(task.id);
+        };
+
+        taskActions.appendChild(toggleBtn);
+        taskActions.appendChild(deleteBtn);
+
+        li.appendChild(taskInfo);
+        li.appendChild(taskActions);
+        taskList.appendChild(li);
+    }
+
+    function toggleTask(id) {
+        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        tasks = tasks.map(task => {
+            if (task.id === id) {
+                task.completed = !task.completed;
+            }
+            return task;
+        });
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+        reloadTaskList();
+    }
+
+    function deleteTask(id) {
+        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        tasks = tasks.filter(task => task.id !== id);
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+
+        const taskItem = document.querySelector(`li[data-id='${id}']`);
+        if (taskItem) {
+            taskItem.remove();
+        }
+    }
+
+    function escapeHTML(str) {
+        return str.replace(/[&<>'"]/g, 
+            tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+        );
+    }
+</script>
+
+</body>
+</html>
