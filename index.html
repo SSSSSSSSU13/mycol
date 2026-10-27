@@ -4,89 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>課題管理アプリ（期限が近い順）</title>
+    <!-- Tailwind CSS CDN for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Inter', sans-serif;
             background-color: #f4f7f6;
-            margin: 0;
-            padding: 20px;
-            color: #333;
         }
-        .container {
-            max-width: 700px;
-            margin: 0 auto;
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        h1 {
-            text-align: center;
-            color: #2c3e50;
-        }
-        .input-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        .input-group input, .input-group select {
-            padding: 10px;
-            font-size: 15px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        .input-group input[type="text"] {
-            flex: 2;
-            min-width: 140px;
-        }
-        .input-group select {
-            flex: 1.5;
-            min-width: 140px;
-            background-color: #fff;
-        }
-        .input-group input[type="date"] {
-            flex: 1;
-            min-width: 120px;
-        }
-        .input-group button {
-            padding: 10px 20px;
-            background-color: #27ae60;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        .input-group button:hover {
-            background-color: #219653;
-        }
-        ul {
-            list-style: none;
-            padding: 0;
-        }
-        li {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #fafafa;
-            padding: 12px;
-            margin-bottom: 8px;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            transition: all 0.2s ease;
-        }
-        li.completed {
-            border-left-color: #95a5a6 !important;
-            background: #ecf0f1 !important;
-            text-decoration: line-through;
-            color: #7f8c8d;
-        }
-        li.completed .task-type-badge {
-            background-color: #d5dbdb !important;
-            color: #566573 !important;
-        }
-
         /* 期限切れ（オーバー）の強調スタイル */
         li.overdue {
             background-color: #fce4e4 !important;
@@ -96,255 +20,296 @@
             color: #d32f2f;
             font-weight: bold;
         }
-
         /* タイプごとの色分け定義 (左ボーダー & バッジ) */
-        li.type-soukatsu-shimei { border-left: 6px solid #27ae60; } /* 緑系 */
+        li.type-soukatsu-shimei { border-left: 6px solid #27ae60; }
         .type-soukatsu-shimei-badge { background-color: #e8f8f5; color: #27ae60; }
 
-        li.type-soukatsu-gakkou { border-left: 6px solid #e67e22; } /* オレンジ系 */
+        li.type-soukatsu-gakkou { border-left: 6px solid #e67e22; }
         .type-soukatsu-gakkou-badge { background-color: #fdebd0; color: #d35400; }
 
-        li.type-keisei-shiryo { border-left: 6px solid #3498db; } /* 青系 */
+        li.type-keisei-shiryo { border-left: 6px solid #3498db; }
         .type-keisei-shiryo-badge { background-color: #ebf5fb; color: #2980b9; }
 
-        li.type-reflection { border-left: 6px solid #9b59b6; } /* 紫系 */
+        li.type-reflection { border-left: 6px solid #9b59b6; }
         .type-reflection-badge { background-color: #f4ecf7; color: #8e44ad; }
 
-        li.type-other { border-left: 6px solid #7f8c8d; } /* グレー系 */
+        li.type-other { border-left: 6px solid #7f8c8d; }
         .type-other-badge { background-color: #eaeded; color: #566573; }
-
-        .task-info {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        .task-meta {
-            font-size: 12px;
-            color: #7f8c8d;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        .task-type-badge {
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-        .task-actions {
-            display: flex;
-            gap: 8px;
-        }
-        button.delete-btn {
-            background-color: #e74c3c;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button.delete-btn:hover {
-            background-color: #c0392b;
-        }
-        button.toggle-btn {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button.toggle-btn:hover {
-            background-color: #2980b9;
-        }
     </style>
 </head>
-<body>
+<body class="p-4 sm:p-8 min-h-screen">
 
-<div class="container">
-    <h1>課題管理アプリ</h1>
-    
-    <div class="input-group">
-        <input type="text" id="taskInput" placeholder="課題名を入力...">
-        <select id="typeInput">
-            <option value="総括（締め切り）">総括（締め切り）</option>
-            <option value="総括（学校内）">総括（学校内）</option>
-            <option value="形成・授業資料">形成・授業資料</option>
-            <option value="リフレクション・OPP">リフレクション・OPP</option>
-            <option value="その他">その他</option>
-        </select>
-        <input type="date" id="dateInput">
-        <button onclick="addTask()">追加</button>
+    <div class="max-w-2xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-lg">
+        <h1 class="text-2xl sm:text-3xl font-bold text-center text-slate-800 mb-6">課題管理アプリ</h1>
+
+        <!-- カスタム通知メッセージボックス -->
+        <div id="messageBox" class="hidden mb-4 p-3 rounded-lg text-sm text-center font-medium transition-all duration-300"></div>
+
+        <!-- 入力フォームエリア -->
+        <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-6 shadow-inner">
+            <input type="hidden" id="editTaskId" value="">
+            <div class="flex flex-col sm:flex-row gap-3 flex-wrap">
+                <input type="text" id="taskInput" placeholder="課題名を入力..." class="flex-2 min-w-[140px] p-3 text-base border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                <select id="typeInput" class="flex-1.5 min-w-[140px] p-3 text-base border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                    <option value="総括（締め切り）">総括（締め切り）</option>
+                    <option value="総括（学校内）">総括（学校内）</option>
+                    <option value="形成・授業資料">形成・授業資料</option>
+                    <option value="リフレクション・OPP">リフレクション・OPP</option>
+                    <option value="その他">その他</option>
+                </select>
+                <input type="date" id="dateInput" class="flex-1 min-w-[120px] p-3 text-base border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+            </div>
+            
+            <div class="flex gap-2 mt-3">
+                <button id="submitBtn" onclick="handleFormSubmit()" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow transition-colors cursor-pointer text-base">追加する</button>
+                <button id="cancelEditBtn" onclick="cancelEdit()" class="hidden px-4 py-3 bg-slate-400 hover:bg-slate-500 text-white font-semibold rounded-lg shadow transition-colors cursor-pointer text-base">キャンセル</button>
+            </div>
+        </div>
+
+        <!-- 課題一覧リスト -->
+        <ul id="taskList" class="space-y-3"></ul>
     </div>
 
-    <ul id="taskList"></ul>
-</div>
+    <script>
+        document.addEventListener('DOMContentLoaded', loadTasks);
 
-<script>
-    /*# 9>3_7@5! ~20? ^8+1$ 4%6/_! #03? 9+1~$  >2^85@7_4%6 1*#90? 3+~52$ 8@6^4! /7%1  $392? 6^0+8#1! ~57@4%2 /3_9*6 0+1^8#?
-!2$5@7_4%3 9*106+8~2? #47^5@1%3 /6$0!  8+92? 1^463%0 #5~7@2! $`8`_`1`+`9`^`4`? `6`%`0`3`7` 
-`/`5`#`2`*`1`@`8`~`0`? `4`+`9`_`6`$`3`! `7`%`2`^`1`0`#`5`? `9`_`8`+`4`6`@` 
-`~`3`! `1`$`7`*`0`%`5`_`2` `9`+`8`^`4`#`6`? `3`@`1`_`0`! `7`%`5`+`2`~`9`*` 
-`4`#`6`? `8`^`1`_`0`$3! 5@2%7+9~6 /4#1_8*0? 3^2!  7%5$9+6~1_8@4#3? 0^2! 1_7*6%5+4~9@8? #  3_20! 1+7%4~9*8^5@6? $3_0! 7+1%4~9*8^5`*/
-    document.addEventListener('DOMContentLoaded', loadTasks);
-
-    function addTask() {
-        const taskInput = document.getElementById('taskInput');
-        const typeInput = document.getElementById('typeInput');
-        const dateInput = document.getElementById('dateInput');
-        
-        const taskText = taskInput.value.trim();
-        const taskType = typeInput.value;
-        const taskDate = dateInput.value;
-
-        if (taskText === "") {
-            alert("課題名を入力してください。");
-            return;
+        // メッセージボックスを表示するヘルパー関数 (alertの代わり)
+        function showMessage(text, isError = false) {
+            const msgBox = document.getElementById('messageBox');
+            msgBox.textContent = text;
+            msgBox.className = `mb-4 p-3 rounded-lg text-sm text-center font-medium transition-all duration-300 ${isError ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-emerald-100 text-emerald-700 border border-emerald-200'}`;
+            msgBox.classList.remove('hidden');
+            setTimeout(() => {
+                msgBox.classList.add('hidden');
+            }, 3000);
         }
 
-        const task = {
-            id: Date.now(),
-            text: taskText,
-            type: taskType,
-            date: taskDate || "",
-            completed: false
-        };
+        // フォームの送信処理（追加 or 更新の切り替え）
+        function handleFormSubmit() {
+            const taskInput = document.getElementById('taskInput');
+            const typeInput = document.getElementById('typeInput');
+            const dateInput = document.getElementById('dateInput');
+            const editTaskId = document.getElementById('editTaskId');
 
-        saveTaskToLocalStorage(task);
-        reloadTaskList();
+            const taskText = taskInput.value.trim();
+            const taskType = typeInput.value;
+            const taskDate = dateInput.value;
 
-        taskInput.value = "";
-        dateInput.value = "";
-        typeInput.selectedIndex = 0;
-    }
+            if (taskText === "") {
+                showMessage("課題名を入力してください。", true);
+                return;
+            }
 
-    function loadTasks() {
-        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-        
-        // 期限が短い順（昇順）にソート
-        tasks.sort((a, b) => {
-            if (!a.date && !b.date) return b.id - a.id; // 両方期限なしなら登録が新しい順
-            if (!a.date) return 1;  // 期限なしは後ろへ
-            if (!b.date) return -1; // 期限なしは後ろへ
-            return new Date(a.date) - new Date(b.date); // 日付が近い順
-        });
+            let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
 
-        tasks.forEach(task => renderTask(task));
-    }
+            if (editTaskId.value === "") {
+                // 新規追加モード
+                const newTask = {
+                    id: Date.now(),
+                    text: taskText,
+                    type: taskType,
+                    date: taskDate || "",
+                    completed: false
+                };
+                tasks.push(newTask);
+                showMessage("新しい課題を追加しました！");
+            } else {
+                // 編集モード
+                const idToEdit = Number(editTaskId.value);
+                tasks = tasks.map(task => {
+                    if (task.id === idToEdit) {
+                        task.text = taskText;
+                        task.type = taskType;
+                        task.date = taskDate || "";
+                    }
+                    return task;
+                });
+                showMessage("課題を更新しました！");
+                resetForm();
+            }
 
-    function reloadTaskList() {
-        document.getElementById('taskList').innerHTML = "";
-        loadTasks();
-    }
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            reloadTaskList();
 
-    function saveTaskToLocalStorage(task) {
-        const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-        tasks.push(task);
-        localStorage.setItem('tasks', JSON.stringify(tasks));
-    }
-
-    function getTypeClass(type) {
-        switch(type) {
-            case '総括（締め切り）': return { item: 'type-soukatsu-shimei', badge: 'type-soukatsu-shimei-badge' };
-            case '総括（学校内）': return { item: 'type-soukatsu-gakkou', badge: 'type-soukatsu-gakkou-badge' };
-            case '形成・授業資料': return { item: 'type-keisei-shiryo', badge: 'type-keisei-shiryo-badge' };
-            case 'リフレクション・OPP': return { item: 'type-reflection', badge: 'type-reflection-badge' };
-            default: return { item: 'type-other', badge: 'type-other-badge' };
+            taskInput.value = "";
+            dateInput.value = "";
+            typeInput.selectedIndex = 0;
         }
-    }
 
-    function renderTask(task) {
-        const taskList = document.getElementById('taskList');
-        
-        const li = document.createElement('li');
-        li.setAttribute('data-id', task.id);
-        
-        const classes = getTypeClass(task.type);
-        li.classList.add(classes.item);
+        // 編集対象のデータを入力フォームにセットする
+        function editTask(id) {
+            const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            const task = tasks.find(t => t.id === id);
 
-        // 期限切れの判定
-        let isOverdue = false;
-        if (!task.completed && task.date) {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const taskDateObj = new Date(task.date);
+            if (!task) return;
+
+            document.getElementById('taskInput').value = task.text;
+            document.getElementById('typeInput').value = task.type;
+            document.getElementById('dateInput').value = task.date;
+            document.getElementById('editTaskId').value = task.id;
+
+            // ボタンの表示切り替え
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.textContent = "変更を保存";
+            submitBtn.className = "flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow transition-colors cursor-pointer text-base";
             
-            if (taskDateObj < today) {
-                isOverdue = true;
-                li.classList.add('overdue');
+            document.getElementById('cancelEditBtn').classList.remove('hidden');
+
+            // フォームへスムーススクロール
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 編集キャンセル処理
+        function cancelEdit() {
+            resetForm();
+            document.getElementById('taskInput').value = "";
+            document.getElementById('dateInput').value = "";
+            document.getElementById('typeInput').selectedIndex = 0;
+            showMessage("編集をキャンセルしました。", true);
+        }
+
+        function resetForm() {
+            document.getElementById('editTaskId').value = "";
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.textContent = "追加する";
+            submitBtn.className = "flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow transition-colors cursor-pointer text-base";
+            document.getElementById('cancelEditBtn').classList.add('hidden');
+        }
+
+        function loadTasks() {
+            let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+                    
+            // 期限が短い順（昇順）にソート
+            tasks.sort((a, b) => {
+                if (!a.date && !b.date) return b.id - a.id; 
+                if (!a.date) return 1;  
+                if (!b.date) return -1; 
+                return new Date(a.date) - new Date(b.date); 
+            });
+
+            tasks.forEach(task => renderTask(task));
+        }
+
+        function reloadTaskList() {
+            document.getElementById('taskList').innerHTML = "";
+            loadTasks();
+        }
+
+        function getTypeClass(type) {
+            switch(type) {
+                case '総括（締め切り）': return { item: 'type-soukatsu-shimei', badge: 'type-soukatsu-shimei-badge' };
+                case '総括（学校内）': return { item: 'type-soukatsu-gakkou', badge: 'type-soukatsu-gakkou-badge' };
+                case '形成・授業資料': return { item: 'type-keisei-shiryo', badge: 'type-keisei-shiryo-badge' };
+                case 'リフレクション・OPP': return { item: 'type-reflection', badge: 'type-reflection-badge' };
+                default: return { item: 'type-other', badge: 'type-other-badge' };
             }
         }
 
-        if (task.completed) {
-            li.classList.add('completed');
-        }
+        function renderTask(task) {
+            const taskList = document.getElementById('taskList');
+                    
+            const li = document.createElement('li');
+            li.setAttribute('data-id', task.id);
+            li.className = "flex flex-col sm:flex-row justify-between items-start sm:items-center bg-slate-50 p-4 rounded-lg shadow-sm transition-all duration-200 gap-3 border-l-4";
+                    
+            const classes = getTypeClass(task.type);
+            li.classList.add(classes.item);
 
-        const displayDate = task.date ? `期限: ${escapeHTML(task.date)}` : "期限なし";
-        const overdueLabel = isOverdue ? ' 【期限切れ】' : '';
-
-        const taskInfo = document.createElement('div');
-        taskInfo.className = 'task-info';
-        taskInfo.innerHTML = `
-            <span>${escapeHTML(task.text)}</span>
-            <div class="task-meta">
-                <span class="task-type-badge ${classes.badge}">${escapeHTML(task.type)}</span>
-                <span class="task-date">${displayDate}${overdueLabel}</span>
-            </div>
-        `;
-
-        const taskActions = document.createElement('div');
-        taskActions.className = 'task-actions';
-
-        const toggleBtn = document.createElement('button');
-        toggleBtn.className = 'toggle-btn';
-        toggleBtn.textContent = task.completed ? '未完了に戻す' : '完了';
-        toggleBtn.onclick = function() {
-            toggleTask(task.id);
-        };
-
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'delete-btn';
-        deleteBtn.textContent = '削除';
-        deleteBtn.onclick = function() {
-            deleteTask(task.id);
-        };
-
-        taskActions.appendChild(toggleBtn);
-        taskActions.appendChild(deleteBtn);
-
-        li.appendChild(taskInfo);
-        li.appendChild(taskActions);
-        taskList.appendChild(li);
-    }
-
-    function toggleTask(id) {
-        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-        tasks = tasks.map(task => {
-            if (task.id === id) {
-                task.completed = !task.completed;
+            // 期限切れの判定
+            let isOverdue = false;
+            if (!task.completed && task.date) {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const taskDateObj = new Date(task.date);
+                            
+                if (taskDateObj < today) {
+                    isOverdue = true;
+                    li.classList.add('overdue');
+                }
             }
-            return task;
-        });
-        localStorage.setItem('tasks', JSON.stringify(tasks));
-        reloadTaskList();
-    }
 
-    function deleteTask(id) {
-        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-        tasks = tasks.filter(task => task.id !== id);
-        localStorage.setItem('tasks', JSON.stringify(tasks));
+            if (task.completed) {
+                li.classList.add('completed', 'opacity-60', 'line-through', 'bg-slate-200');
+            }
 
-        const taskItem = document.querySelector(`li[data-id='${id}']`);
-        if (taskItem) {
-            taskItem.remove();
+            const displayDate = task.date ? `期限: ${escapeHTML(task.date)}` : "期限なし";
+            const overdueLabel = isOverdue ? ' 【期限切れ】' : '';
+
+            const taskInfo = document.createElement('div');
+            taskInfo.className = 'flex flex-col gap-1 w-full sm:w-auto';
+            taskInfo.innerHTML = `
+                <span class="text-base font-semibold text-slate-800">${escapeHTML(task.text)}</span>
+                <div class="flex flex-wrap gap-2 items-center text-xs text-slate-500">
+                    <span class="px-2 py-0.5 rounded font-bold ${classes.badge}">${escapeHTML(task.type)}</span>
+                    <span class="task-date">${displayDate}${overdueLabel}</span>
+                </div>
+            `;
+
+            const taskActions = document.createElement('div');
+            taskActions.className = 'flex gap-2 w-full sm:w-auto justify-end flex-wrap';
+
+            // 編集ボタン
+            const editBtn = document.createElement('button');
+            editBtn.className = 'px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold rounded shadow transition-colors cursor-pointer';
+            editBtn.textContent = '編集';
+            editBtn.onclick = function() {
+                editTask(task.id);
+            };
+
+            // 完了/未完了トグルボタン
+            const toggleBtn = document.createElement('button');
+            toggleBtn.className = 'px-3 py-1.5 bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold rounded shadow transition-colors cursor-pointer';
+            toggleBtn.textContent = task.completed ? '未完了に戻す' : '完了';
+            toggleBtn.onclick = function() {
+                toggleTask(task.id);
+            };
+
+            // 削除ボタン
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'px-3 py-1.5 bg-rose-500 hover:bg-rose-600 text-white text-xs font-semibold rounded shadow transition-colors cursor-pointer';
+            deleteBtn.textContent = '削除';
+            deleteBtn.onclick = function() {
+                deleteTask(task.id);
+            };
+
+            taskActions.appendChild(editBtn);
+            taskActions.appendChild(toggleBtn);
+            taskActions.appendChild(deleteBtn);
+
+            li.appendChild(taskInfo);
+            li.appendChild(taskActions);
+            taskList.appendChild(li);
         }
-    }
 
-    function escapeHTML(str) {
-        return str.replace(/[&<>'"]/g, 
-            tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
-        );
-    }
-</script>
+        function toggleTask(id) {
+            let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            tasks = tasks.map(task => {
+                if (task.id === id) {
+                    task.completed = !task.completed;
+                }
+                return task;
+            });
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            reloadTaskList();
+        }
 
+        function deleteTask(id) {
+            let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            tasks = tasks.filter(task => task.id !== id);
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            
+            const taskItem = document.querySelector(`li[data-id='${id}']`);
+            if (taskItem) {
+                taskItem.remove();
+            }
+            showMessage("課題を削除しました。");
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+    </script>
 </body>
 </html>
